@@ -1,0 +1,1 @@
+# Odoo 17 Module development From server Framwork 101
