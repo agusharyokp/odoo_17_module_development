@@ -1,6 +1,7 @@
 from odoo import api, fields, models
 from datetime import timedelta
 from odoo.exceptions import UserError
+from odoo.exceptions import ValidationError
 
 class EstatePropertyOffer(models.Model):
     _name = "estate.property.offer"
@@ -18,6 +19,16 @@ class EstatePropertyOffer(models.Model):
     property_id = fields.Many2one('estate.property', required=True)
     validity = fields.Integer(default=7, string="Validity (days)") 
     date_deadline = fields.Date(compute="_compute_date_deadline", inverse="_inverse_date_deadline", string="Deadline")
+
+    sql_constraints = [
+        ('check_offer_price_positive', 'CHECK(price > 0)',
+         'The offer price must be strictly positive'),
+    ]
+
+    @api.constrains('price')
+    def check_offer_price_positive(self):
+        if self.price <= 0:
+            raise ValidationError("The offer price must be strictly positive.")
 
     @api.depends("create_date", "validity")
     def _compute_date_deadline(self):
