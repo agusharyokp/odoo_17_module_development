@@ -6,6 +6,7 @@ from odoo.exceptions import ValidationError
 class EstatePropertyOffer(models.Model):
     _name = "estate.property.offer"
     _description = "Estate Property Offer"
+    _order = "price desc"
 
     price = fields.Float()
     status = fields.Selection(
@@ -19,6 +20,9 @@ class EstatePropertyOffer(models.Model):
     property_id = fields.Many2one('estate.property', required=True)
     validity = fields.Integer(default=7, string="Validity (days)") 
     date_deadline = fields.Date(compute="_compute_date_deadline", inverse="_inverse_date_deadline", string="Deadline")
+    property_state = fields.Selection(related="property_id.state", readonly=True)
+
+    property_type_id = fields.Many2one(related="property_id.property_type_id", store=True)
 
     sql_constraints = [
         ('check_offer_price_positive', 'CHECK(price > 0)',
@@ -47,12 +51,18 @@ class EstatePropertyOffer(models.Model):
 
     def action_accept(self):
         for record in self:
+            property = record.property_id
+
             if record.property_id == "sold":
                 raise UserError("Cannot accept offer for a sold property.")
             
             record.status = 'accepted'
             record.property_id.buyer_id = record.partner_id
             record.property_id.selling_price = record.price
+
+            if property.state == 'new' or property.state == 'offer_received':
+                property.state = 'offer_accepted'
+
             return True
     
     def action_refuse(self):
@@ -62,3 +72,13 @@ class EstatePropertyOffer(models.Model):
             
             record.status = 'refused'
             return True
+        
+    @api.model
+    def create(self, vals):
+        offer = super().create(vals)
+        property = offer.property_id
+
+        if property.state == 'new':
+            property.state = 'offer_received'
+
+        return offer
