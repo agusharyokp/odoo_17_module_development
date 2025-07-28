@@ -9,6 +9,8 @@ This is an Odoo 17 project designed for module development using the Odoo server
 - Custom addons directory for module development
 - Example environment configuration
 - Pre-configured docker-compose setup
+- Inline views and widgets for better UI/UX
+- Smart stat button for enhanced dashboard functionality
 
 ## Prerequisites
 - Docker Engine 20.10.0 or later
