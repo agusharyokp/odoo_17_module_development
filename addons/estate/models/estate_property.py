@@ -66,7 +66,6 @@ class EstateProperty(models.Model):
                     raise ValidationError("Selling price cannot be lower than 90% of expected price.")
 
 
-
     @api.depends("living_area", "garden_area")
     def _compute_total_area(self):
         for record in self:
@@ -107,3 +106,9 @@ class EstateProperty(models.Model):
 
             record.state = 'canceled'
             return True
+        
+    def unlink(self):
+        for record in self:
+            if record.state != 'new' or  record.state != 'canceled':
+                raise UserError("You cannot a propert  if its status is not 'New' or 'Canceled'")
+            return super(EstateProperty, self).unlink()

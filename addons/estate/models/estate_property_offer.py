@@ -75,10 +75,36 @@ class EstatePropertyOffer(models.Model):
         
     @api.model
     def create(self, vals):
-        offer = super().create(vals)
-        property = offer.property_id
+        property_id = vals.get("property_id")
+        new_price = vals.get("price")
 
-        if property.state == 'new':
+        if not property_id or not new_price:
+            raise UserError("Property ID and price are required.")
+        
+        # Ambil harga tertinggi dari offer yang sudah ada untuk property ini
+        highest_offer = self.search([
+            ('property_id', '=', property_id)
+        ], order='price desc', limit=1)
+
+        if highest_offer and new_price <= highest_offer.price:
+            raise UserError(f"Offer must be higher than {highest_offer.price}")
+
+
+        # existing_offers =  self.search([('property_id', '=', vals["property_id"])])
+        
+        # for offer in existing_offers:
+        #     if vals["price"] <= offer.price:
+        #         raise UserError("Offer must be higer than existin offers")
+            
+        property =  self.env['estate.property'].browse(vals['property_id'])
+        if property.state == "new":
             property.state = 'offer_received'
+        return super(EstatePropertyOffer, self).create(vals)
 
-        return offer
+
+        # offer = super().create(vals)
+        # property = offer.property_id
+        # if property.state == 'new':
+        #     property.state = 'offer_received'
+
+        # return offer
